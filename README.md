@@ -23,7 +23,7 @@ A Hyprland overview mode plugin, a new tiling WM workflow.
 | Multi-monitor | Working |
 | Auto-exit on window close | Working |
 | Gesture support (touchpad) | Working |
-| Alt-release exit | Experimental |
+| Alt-release exit | Working |
 | Hotarea (corner trigger) | Removed (caused input issues) |
 
 ### What can it do?

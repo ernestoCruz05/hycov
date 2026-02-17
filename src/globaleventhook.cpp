@@ -435,6 +435,8 @@ void registerGlobalEventHook()
 
   // Guard scrolling follow-focus callback while in overview.
   // This avoids layout-owned activeWindow handlers from fighting ovgrid geometry.
+  // WARNING: This cancels ALL activeWindow events during overview when using the scrolling
+  // layout. Other plugins listening to this event will also be blocked.
   g_hycov_pActiveWindowGuardCallback = HyprlandAPI::registerCallbackDynamic(PHANDLE, "activeWindow", [](void*, SCallbackInfo& info, std::any) {
     if (!g_hycov_scrolling_guard_activewindow) {
       return;

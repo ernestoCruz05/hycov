@@ -173,7 +173,7 @@ void OvGridLayout::removeOldLayoutData(PHLWINDOW pWindow) {
         g_pLayoutManager->getCurrentLayout()->onWindowRemovedTiling(pWindow);
     } else {
         // may be not support other layout
-        hycov_log(LOG,"unknow old layout:{}, trying generic window removal",configLayoutName);
+        hycov_log(Log::ERR,"unknown old layout:{}, trying generic window removal",configLayoutName);
         g_pLayoutManager->getCurrentLayout()->onWindowRemovedTiling(pWindow);
     }
 

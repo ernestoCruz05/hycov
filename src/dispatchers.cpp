@@ -17,6 +17,9 @@ static void refreshRuntimeLayoutState() {
 	g_hycov_compat_scrolling_active = (g_hycov_configLayoutName == "scrolling");
 }
 
+// WARNING: This function directly mutates hyprscrolling's config at runtime.
+// If hyprscrolling changes its config key names, this will silently fail.
+// The null checks below guard against hyprscrolling not being loaded.
 static void setScrollingFollowFocusOverride(bool disable) {
 	if (!g_hycov_compat_scrolling_active) {
 		return;
@@ -71,16 +74,12 @@ void recalculateAllMonitor() {
 	}
 }
 
-static bool isScrollingLayoutActive() {
-	if (!g_pLayoutManager->getCurrentLayout()) {
+static bool shouldCheckScrollingConsistency(const std::string& sourceLayout) {
+	if (!g_hycov_compat_scrolling_active || !g_hycov_scrolling_failsafe || sourceLayout != "scrolling") {
 		return false;
 	}
-
-	return g_pLayoutManager->getCurrentLayout()->getLayoutName() == "scrolling";
-}
-
-static bool shouldCheckScrollingConsistency(const std::string& sourceLayout) {
-	return g_hycov_compat_scrolling_active && g_hycov_scrolling_failsafe && sourceLayout == "scrolling" && isScrollingLayoutActive();
+	auto* layout = g_pLayoutManager->getCurrentLayout();
+	return layout && layout->getLayoutName() == "scrolling";
 }
 
 static bool validateScrollingConsistency() {
@@ -626,6 +625,9 @@ void dispatch_leaveoverview(std::string arg)
 	//move clients to it's original workspace 
 	const auto [restoreOk, restoreFail] = g_hycov_OvGridLayout->moveWindowToSourceWorkspace();
 	hycov_log(LOG,"overview restore summary,ok:{} fail:{}",restoreOk,restoreFail);
+	if (restoreFail > 0) {
+		hycov_log(Log::ERR, "failed to restore {} windows to source workspace, overview exit may be incomplete", restoreFail);
+	}
 	// go to the workspace where the active client was before
 	g_hycov_OvGridLayout->changeToActivceSourceWorkspace();
 	
@@ -694,7 +696,7 @@ void dispatch_leaveoverview(std::string arg)
 	}
 	if (shouldCheckScrollingConsistency(sourceLayout)) {
 		if (!validateScrollingConsistency()) {
-			hycov_log(LOG, "scrolling consistency mismatch detected, enabling failsafe recovery");
+			hycov_log(Log::ERR, "scrolling consistency mismatch detected, enabling failsafe recovery");
 			recoverScrollingStateInPlace(pActiveWindow);
 			if (!validateScrollingConsistency()) {
 				hycov_log(Log::ERR, "scrolling consistency recovery failed, manual layout reset may be required");
